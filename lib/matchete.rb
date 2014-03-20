@@ -6,22 +6,22 @@ module Matchete
 
   def self.included(klass)
     klass.extend ClassMethods
-    klass.instance_variable_set "@functions", {}
-    klass.instance_variable_set "@default_functions", {}
+    klass.instance_variable_set "@methods", {}
+    klass.instance_variable_set "@default_methods", {}
   end
 
   Any = -> (x) { true }
   None = -> (x) { false }
 
   module ClassMethods
-    def on(*guards, function)
-      @functions[function] ||= []
-      @functions[function] << [guards, instance_method(function)]
-      convert_to_matcher function
+    def on(*guards, method_name)
+      @methods[method_name] ||= []
+      @methods[method_name] << [guards, instance_method(method_name)]
+      convert_to_matcher method_name
     end
 
     def default(method_name)
-      @default_functions[method_name] = instance_method(method_name)
+      @default_methods[method_name] = instance_method(method_name)
       convert_to_matcher method_name
     end
 
@@ -33,27 +33,34 @@ module Matchete
       end
     end
 
-    def convert_to_matcher(function)
-      define_method(function) do |*args|
-        guards = self.class.instance_variable_get('@functions')[function].find do |guards, _|
-          self.class.match_guards guards, args
-        end
-        
-        handler = if guards.nil?
-          default_method = self.class.instance_variable_get('@default_functions')[function]
-          if default_method
-            default_method
-          else
-            raise NotResolvedError.new("not resolved #{function} with #{args}")
-          end
-        else
-          guards[1]
-        end
+    def call_overloaded(object, method_name, with: [])
+      handler = find_handler(method_name, with)
+      handler.bind(object).call *with
+    end
 
-        handler.bind(self).call *args
+    def find_handler(method_name, args)
+      guards = @methods[method_name].find do |guards, _|
+        match_guards guards, args
+      end
+
+      if guards.nil?
+        default_method = @default_methods[method_name]
+        if default_method
+          default_method
+        else
+          raise NotResolvedError.new("No matching #{method_name} method for args #{args}")
+        end
+      else
+        guards[1]
       end
     end
 
+    def convert_to_matcher(method_name)
+      define_method(method_name) do |*args|
+        self.class.call_overloaded(self, method_name, with: args)
+      end
+    end
+    
     def match_guards(guards, args)
       guards.zip(args).all? do |guard, arg|
         match_guard guard, arg
