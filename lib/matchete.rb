@@ -12,9 +12,18 @@ module Matchete
   None = -> (x) { false }
 
   module ClassMethods
-    def on(*guards, method_name)
+    def on(*args, **kwargs)
+      if kwargs.count.zero?
+        *guard_args, method_name = args
+        guard_kwargs = {}
+      else
+        method_name = kwargs[:method]
+        kwargs.delete :method
+        guard_args = args
+        guard_kwargs = kwargs
+      end
       @methods[method_name] ||= []
-      @methods[method_name] << [guards, instance_method(method_name)]
+      @methods[method_name] << [guard_args, guard_kwargs, instance_method(method_name)]
       convert_to_matcher method_name
     end
 
@@ -32,20 +41,32 @@ module Matchete
     end
 
     def convert_to_matcher(method_name)
-      define_method(method_name) do |*args|
-        call_overloaded(method_name, with: args)
+      define_method(method_name) do |*args, **kwargs|
+        call_overloaded(method_name, args: args, kwargs: kwargs)
       end
     end
   end
   
-  def call_overloaded(method_name, with: [])
-    handler = find_handler(method_name, with)
-    handler.bind(self).call *with
+  def call_overloaded(method_name, args: [], kwargs: {})
+    handler = find_handler(method_name, args, kwargs)
+    if handler.parameters.any? do |type, _|
+        [:key, :keyrest, :keyreq].include? type
+      end
+      handler.bind(self).call *args, **kwargs
+    else
+      handler.bind(self).call *args
+    end
+    #insane workaround, because if you have
+    #def z(f);end
+    #and you call it like that
+    #a(2, **{e: 4})
+    #it raises wrong number of arguments (2 for 1)
+    #clean later
   end
 
-  def find_handler(method_name, args)
-    guards = self.class.instance_variable_get('@methods')[method_name].find do |guards, _|
-      match_guards guards, args
+  def find_handler(method_name, args, kwargs)
+    guards = self.class.instance_variable_get('@methods')[method_name].find do |guard_args, guard_kwargs, _|
+      match_guards guard_args, guard_kwargs, args, kwargs
     end
 
     if guards.nil?
@@ -56,13 +77,17 @@ module Matchete
         raise NotResolvedError.new("No matching #{method_name} method for args #{args}")
       end
     else
-      guards[1]
+      guards[2]
     end
   end
 
-  def match_guards(guards, args)
-    guards.zip(args).all? do |guard, arg|
+  def match_guards(guard_args, guard_kwargs, args, kwargs)
+    return false if guard_args.count != args.count || guard_kwargs.count != kwargs.count
+    guard_args.zip(args).all? do |guard, arg|
       match_guard guard, arg
+    end and
+    guard_kwargs.all? do |label, guard|
+      match_guard guard, kwargs[label]
     end
   end
 

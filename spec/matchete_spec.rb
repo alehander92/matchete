@@ -178,12 +178,26 @@ describe Matchete do
     -> { A.new.play(4) }.should raise_error(Matchete::NotResolvedError)
   end
 
+  it 'can match on different keyword arguments' do
+    class A
+      include Matchete
+
+      on e: Integer, f: String, method:
+      def play(e:, f:)
+        :y
+      end
+    end
+
+    A.new.play(e: 0, f: "y").should eq :y
+    -> { A.new.play(e: "f", f: Class)}.should raise_error(Matchete::NotResolvedError)
+  end
+
   it 'can match on multiple different kinds of patterns' do
     class A
       include Matchete
     end
 
-    A.new.match_guards([Integer, Float], [8, 8.8]).should be_true
+    A.new.match_guards([Integer, Float], {}, [8, 8.8], {}).should be_true
   end
 
   describe '#match_guard' do
@@ -227,5 +241,5 @@ describe Matchete do
       @a.match_guard('d', 'f').should be_false
     end
   end
-
 end
+  
