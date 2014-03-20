@@ -5,6 +5,8 @@ Matchete provides a DSL for method overloading based on pattern matching for Rub
 
 It's just a quick hack inspired by weissbier and the use-return-values-of-method-definitions DSL technique used in [harmonic](https://github.com/s2gatev/harmonic)
 
+**It supports only `ruby 2.1+`**
+
 Install
 -----
 `gem install matchete`
@@ -96,6 +98,9 @@ p converter.convert(2.2) #[:z, 2.2]
 
 Todo
 -----
+* Clean up the specs, right now they're a mess.
+* Fix all kinds of edge cases
+
 
 Copyright
 -----
