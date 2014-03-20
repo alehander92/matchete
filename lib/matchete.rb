@@ -23,7 +23,7 @@ module Matchete
       convert_to_matcher method_name
     end
 
-    def duck(*method_names)
+    def supporting(*method_names)
       -> object do
         method_names.all? do |method_name|
           object.respond_to? method_name
@@ -31,58 +31,56 @@ module Matchete
       end
     end
 
-    def call_overloaded(object, method_name, with: [])
-      handler = find_handler(method_name, with)
-      handler.bind(object).call *with
-    end
-
-    def find_handler(method_name, args)
-      guards = @methods[method_name].find do |guards, _|
-        match_guards guards, args
-      end
-
-      if guards.nil?
-        default_method = @default_methods[method_name]
-        if default_method
-          default_method
-        else
-          raise NotResolvedError.new("No matching #{method_name} method for args #{args}")
-        end
-      else
-        guards[1]
-      end
-    end
-
     def convert_to_matcher(method_name)
       define_method(method_name) do |*args|
-        self.class.call_overloaded(self, method_name, with: args)
+        call_overloaded(method_name, with: args)
       end
     end
-    
-    def match_guards(guards, args)
-      guards.zip(args).all? do |guard, arg|
-        match_guard guard, arg
-      end
+  end
+  
+  def call_overloaded(method_name, with: [])
+    handler = find_handler(method_name, with)
+    handler.bind(self).call *with
+  end
+
+  def find_handler(method_name, args)
+    guards = self.class.instance_variable_get('@methods')[method_name].find do |guards, _|
+      match_guards guards, args
     end
 
-    def match_guard(guard, arg)
-      case guard
-        when Module
-          arg.is_a? guard
-        when Symbol
-          send guard, arg
-        when Proc
-          guard.call arg
-        when String
-          guard == arg
-        when Regexp
-          arg.is_a? String and guard.match arg
-        when Array
-          arg.is_a?(Array) and
-          guard.zip(arg).all? { |child_guard, child| match_guard child_guard, child }
-        else
-          guard == arg
+    if guards.nil?
+      default_method = self.class.instance_variable_get('@default_methods')[method_name]
+      if default_method
+        default_method
+      else
+        raise NotResolvedError.new("No matching #{method_name} method for args #{args}")
       end
+    else
+      guards[1]
+    end
+  end
+
+  def match_guards(guards, args)
+    guards.zip(args).all? do |guard, arg|
+      match_guard guard, arg
+    end
+  end
+
+  def match_guard(guard, arg)
+    case guard
+      when Module
+        arg.is_a? guard
+      when Symbol
+        send guard, arg
+      when Proc
+        guard.call arg
+      when Regexp
+        arg.is_a? String and guard.match arg
+      when Array
+        arg.is_a?(Array) and
+        guard.zip(arg).all? { |child_guard, child| match_guard child_guard, child }
+      else
+        guard == arg
     end
   end
 end

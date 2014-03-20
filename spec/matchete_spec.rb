@@ -131,4 +131,101 @@ describe Matchete do
 
     A.new.play(2.2).should eq :else    
   end
+
+  it 'can use a pattern based on existing predicate methods given as symbols' do
+    class A
+      include Matchete
+
+      on :even?,
+      def play(value)
+        value
+      end
+      
+      def even?(value)
+        value.remainder(2).zero? #so gay and gay
+      end
+    end
+
+    A.new.play(2).should eq 2
+    -> { A.new.play(5) }.should raise_error(Matchete::NotResolvedError)
+  end
+
+  it 'can use a pattern based on a lambda predicate' do
+    class A
+      include Matchete
+
+      on -> x { x % 2 == 0 },
+      def play(value)
+        value
+      end
+    end
+
+    A.new.play(2).should eq 2
+    -> { A.new.play(7) }.should raise_error(Matchete::NotResolvedError)
+  end
+
+  it 'can use a pattern based on responding to methods' do
+    class A
+      include Matchete
+
+      on supporting(:map),
+      def play(value)
+        value
+      end
+    end
+
+    A.new.play([]).should eq []
+    -> { A.new.play(4) }.should raise_error(Matchete::NotResolvedError)
+  end
+
+  it 'can match on multiple different kinds of patterns' do
+    class A
+      include Matchete
+    end
+
+    A.new.match_guards([Integer, Float], [8, 8.8]).should be_true
+  end
+
+  describe '#match_guard' do
+    before :all do
+      class A
+        include Matchete
+
+        def even?(value)
+          value.remainder(2).zero?
+        end
+      end
+      @a = A.new
+    end
+
+    it 'matches modules and classes' do
+      @a.match_guard(Integer, 2).should be_true
+      @a.match_guard(Class, 4).should be_false
+    end
+
+    it 'matches methods given as symbols' do
+      @a.match_guard(:even?, 2).should be_true
+      -> { @a.match_guard(:odd?, 4) }.should raise_error
+    end
+
+    it 'matches predicates given as lambdas' do
+      @a.match_guard(-> x { x == {} }, {}).should be_true
+    end
+
+    it 'matches on regex' do
+      @a.match_guard(/a/, 'aw').should be_true
+      @a.match_guard(/z/, 'lol').should be_false
+    end
+
+    it 'matches on nested arrays' do
+      @a.match_guard([Integer, [:even?]], [2, [4]]).should be_true
+      @a.match_guard([Float, [:even?]], [2.2, [7]]).should be_false      
+    end
+
+    it 'matches on exact values' do
+      @a.match_guard(2, 2).should be_true
+      @a.match_guard('d', 'f').should be_false
+    end
+  end
+
 end
