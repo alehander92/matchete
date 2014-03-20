@@ -1,9 +1,7 @@
 require 'set'
+require_relative 'matchete/exceptions'
 
 module Matchete
-  class NotResolvedError < StandardError
-  end
-
   def self.included(klass)
     klass.extend ClassMethods
     klass.instance_variable_set "@methods", {}
