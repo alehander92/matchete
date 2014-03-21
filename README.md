@@ -11,6 +11,10 @@ Install
 -----
 `gem install matchete`
 
+cbb
+-----
+![](https://global3.memecdn.com/kawaii-danny-trejo_o_2031011.jpg)
+
 Usage
 -----
 
