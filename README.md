@@ -11,9 +11,6 @@ Install
 -----
 `gem install matchete`
 
-cbb
------
-![](https://global3.memecdn.com/kawaii-danny-trejo_o_2031011.jpg)
 
 Usage
 -----
@@ -99,6 +96,9 @@ p converter.convert(:f) #[:fail, :f]
 p converter.convert(free: 2) #[:rofl, 2]
 p converter.convert(2.2) #[:z, 2.2]
 ```
+cbb
+-----
+![](https://global3.memecdn.com/kawaii-danny-trejo_o_2031011.jpg)
 
 Todo
 -----
