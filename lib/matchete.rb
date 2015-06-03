@@ -101,7 +101,6 @@ module Matchete
   end
 
   def match_guard(guard, arg)
-    p
     case guard
       when Module
         arg.is_a? guard

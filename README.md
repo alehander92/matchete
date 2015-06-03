@@ -4,6 +4,7 @@ Matchete
 Matchete provides a DSL for method overloading based on pattern matching for Ruby.
 
 [![Build Status](https://travis-ci.org/alehander42/matchete.svg)](https://travis-ci.org/alehander42/matchete)
+[![Code Climate](https://codeclimate.com/github/alehander42/matchete.png)](https://codeclimate.com/github/alehander42/matchete)
 
 It's just a quick hack inspired by weissbier and the use-return-values-of-method-definitions DSL technique used in [harmonic](https://github.com/s2gatev/harmonic)
 
