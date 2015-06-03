@@ -32,6 +32,14 @@ module Matchete
       convert_to_matcher method_name
     end
 
+    def either(*guards)
+      -> arg { guards.any? { |g| match_guard(g, arg) } }
+    end
+
+    def full_match(*guards)
+      -> arg { guards.all? { |g| match_guard(g, arg) } }
+    end
+
     def supporting(*method_names)
       -> object do
         method_names.all? do |method_name|
@@ -46,22 +54,22 @@ module Matchete
       end
     end
   end
-  
+
   def call_overloaded(method_name, args: [], kwargs: {})
     handler = find_handler(method_name, args, kwargs)
-    if handler.parameters.any? do |type, _|
-        [:key, :keyrest, :keyreq].include? type
-      end
-      handler.bind(self).call *args, **kwargs
-    else
+
+    if kwargs.empty?
       handler.bind(self).call *args
+    else
+      handler.bind(self).call *args, **kwargs
     end
     #insane workaround, because if you have
     #def z(f);end
     #and you call it like that
-    #a(2, **{e: 4})
+    #empty = {}
+    #z(2, **empty)
     #it raises wrong number of arguments (2 for 1)
-    #clean later
+    #clean up later
   end
 
   def find_handler(method_name, args, kwargs)
@@ -77,12 +85,13 @@ module Matchete
         raise NotResolvedError.new("No matching #{method_name} method for args #{args}")
       end
     else
-      guards[2]
+      guards.last
     end
   end
 
   def match_guards(guard_args, guard_kwargs, args, kwargs)
-    return false if guard_args.count != args.count || guard_kwargs.count != kwargs.count
+    return false if guard_args.count != args.count ||
+                    guard_kwargs.count != kwargs.count
     guard_args.zip(args).all? do |guard, arg|
       match_guard guard, arg
     end and
@@ -92,20 +101,25 @@ module Matchete
   end
 
   def match_guard(guard, arg)
+    p
     case guard
       when Module
         arg.is_a? guard
       when Symbol
         send guard, arg
       when Proc
-        guard.call arg
+        instance_exec arg, &guard
       when Regexp
         arg.is_a? String and guard.match arg
       when Array
         arg.is_a?(Array) and
         guard.zip(arg).all? { |child_guard, child| match_guard child_guard, child }
       else
-        guard == arg
+        if guard.is_a?(String) && guard[0] == '#'
+          arg.respond_to? guard[1..-1]
+        else
+          guard == arg
+        end
     end
   end
 end

@@ -20,8 +20,8 @@ describe Matchete do
     end
 
     a = A.new
-    a.play(2).should eq :integer
-    a.play(2.2, 4).should eq :float
+    expect(a.play(2)).to eq :integer
+    expect(a.play(2.2, 4)).to eq :float
   end
 
   it 'can use a pattern based on classes and modules' do
@@ -45,9 +45,9 @@ describe Matchete do
     end
 
     a = A.new
-    a.play(2).should eq :integer
-    a.play(2.2).should eq :float
-    a.play([2]).should eq :enumerable
+    expect(a.play(2)).to eq :integer
+    expect(a.play(2.2)).to eq :float
+    expect(a.play([2])).to eq :enumerable
   end
 
   it 'can use a pattern based on nested arrays with classes/modules' do
@@ -66,8 +66,8 @@ describe Matchete do
     end
 
     a = A.new
-    a.play([2, 2.2]).should eq [:integer, :float]
-    a.play([[2], Matchete]).should eq :s
+    expect(a.play([2, 2.2])).to eq [:integer, :float]
+    expect(a.play([[2], Matchete])).to eq :s
   end
 
   it 'can use a pattern based on exact values' do
@@ -86,9 +86,9 @@ describe Matchete do
     end
 
     a = A.new
-    a.play(2, 4).should eq 2
-    a.play(4, 4).should eq 4
-    -> { a.play(8, 2) }.should raise_error(Matchete::NotResolvedError)
+    expect(a.play(2, 4)).to eq 2
+    expect(a.play(4, 4)).to eq 4
+    expect { a.play(8, 2) }.to raise_error(Matchete::NotResolvedError)
   end
 
   it 'can use a pattern based on regexes' do
@@ -107,8 +107,8 @@ describe Matchete do
     end
 
     a = A.new
-    a.play('zewr').should eq 'z'
-    a.play('yy').should eq 'y'
+    expect(a.play('zewr')).to eq 'z'
+    expect(a.play('yy')).to eq 'y'
   end
 
   it 'can use a default method when everything else fails' do
@@ -121,15 +121,15 @@ describe Matchete do
       end
     end
 
-    -> { A.new.play(2.2) }.should raise_error(Matchete::NotResolvedError)
-    
+    expect { A.new.play(2.2) }.to raise_error(Matchete::NotResolvedError)
+
     class A
       default def play(value)
         :else
       end
     end
 
-    A.new.play(2.2).should eq :else    
+    expect(A.new.play(2.2)).to eq :else
   end
 
   it 'can use a pattern based on existing predicate methods given as symbols' do
@@ -140,14 +140,14 @@ describe Matchete do
       def play(value)
         value
       end
-      
+
       def even?(value)
         value.remainder(2).zero? #so gay and gay
       end
     end
 
-    A.new.play(2).should eq 2
-    -> { A.new.play(5) }.should raise_error(Matchete::NotResolvedError)
+    expect(A.new.play(2)).to eq 2
+    expect { A.new.play(5) }.to raise_error(Matchete::NotResolvedError)
   end
 
   it 'can use a pattern based on a lambda predicate' do
@@ -160,8 +160,8 @@ describe Matchete do
       end
     end
 
-    A.new.play(2).should eq 2
-    -> { A.new.play(7) }.should raise_error(Matchete::NotResolvedError)
+    expect(A.new.play(2)).to eq 2
+    expect { A.new.play(7) }.to raise_error(Matchete::NotResolvedError)
   end
 
   it 'can use a pattern based on responding to methods' do
@@ -174,8 +174,8 @@ describe Matchete do
       end
     end
 
-    A.new.play([]).should eq []
-    -> { A.new.play(4) }.should raise_error(Matchete::NotResolvedError)
+    expect(A.new.play([])).to eq []
+    expect { A.new.play(4) }.to raise_error(Matchete::NotResolvedError)
   end
 
   it 'can match on different keyword arguments' do
@@ -188,8 +188,8 @@ describe Matchete do
       end
     end
 
-    A.new.play(e: 0, f: "y").should eq :y
-    -> { A.new.play(e: "f", f: Class)}.should raise_error(Matchete::NotResolvedError)
+    expect(A.new.play(e: 0, f: "y")).to eq :y
+    expect { A.new.play(e: "f", f: Class)}.to raise_error(Matchete::NotResolvedError)
   end
 
   it 'can match on multiple different kinds of patterns' do
@@ -197,7 +197,7 @@ describe Matchete do
       include Matchete
     end
 
-    A.new.match_guards([Integer, Float], {}, [8, 8.8], {}).should be_true
+    expect(A.new.match_guards([Integer, Float], {}, [8, 8.8], {})).to be_truthy
   end
 
   describe '#match_guard' do
@@ -213,33 +213,33 @@ describe Matchete do
     end
 
     it 'matches modules and classes' do
-      @a.match_guard(Integer, 2).should be_true
-      @a.match_guard(Class, 4).should be_false
+      expect(@a.match_guard(Integer, 2)).to be_truthy
+      expect(@a.match_guard(Class, 4)).to be_falsey
     end
 
     it 'matches methods given as symbols' do
-      @a.match_guard(:even?, 2).should be_true
-      -> { @a.match_guard(:odd?, 4) }.should raise_error
+      expect(@a.match_guard(:even?, 2)).to be_truthy
+      expect { @a.match_guard(:odd?, 4) }.to raise_error
     end
 
     it 'matches predicates given as lambdas' do
-      @a.match_guard(-> x { x == {} }, {}).should be_true
+      expect(@a.match_guard(-> x { x == {} }, {})).to be_truthy
     end
 
     it 'matches on regex' do
-      @a.match_guard(/a/, 'aw').should be_true
-      @a.match_guard(/z/, 'lol').should be_false
+      expect(@a.match_guard(/a/, 'aw')).to be_truthy
+      expect(@a.match_guard(/z/, 'lol')).to be_falsey
     end
 
     it 'matches on nested arrays' do
-      @a.match_guard([Integer, [:even?]], [2, [4]]).should be_true
-      @a.match_guard([Float, [:even?]], [2.2, [7]]).should be_false      
+      expect(@a.match_guard([Integer, [:even?]], [2, [4]])).to be_truthy
+      expect(@a.match_guard([Float, [:even?]], [2.2, [7]])).to be_falsey
     end
 
     it 'matches on exact values' do
-      @a.match_guard(2, 2).should be_true
-      @a.match_guard('d', 'f').should be_false
+      expect(@a.match_guard(2, 2)).to be_truthy
+      expect(@a.match_guard('d', 'f')).to be_falsey
     end
   end
 end
-  
+

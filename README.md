@@ -7,6 +7,19 @@ It's just a quick hack inspired by weissbier and the use-return-values-of-method
 
 **It supports only ruby 2.1+**
 
+Features
+--------
+
+* `on [:value, Integer]` matches an arg with the same internal structure
+* `on '#method_name'` matches args responding to `method_name`
+* `on AClass` matches instances of `AClass`
+* `on a: 2, method:...` matches keyword args
+* `on :test?` matches with user-defined predicate methods
+* `on either('#count', Array)` matches if any of the tests returns true for an arg
+* `on full_match('#count', '#combine')` matches if all of the tests return true for an arg
+
+
+
 Install
 -----
 `gem install matchete`
@@ -37,64 +50,87 @@ FactorialStrikesAgain.new.factorial(-2) #Matchete::NotResolvedError No matching 
 ```
 
 ```ruby
-require 'matchete'
-
 class Converter
   include Matchete
+
+  on '#special_convert',
+  def convert(value)
+    value.special_convert
+  end
 
   on Integer,
   def convert(value)
     [:integer, value]
   end
-  
+
   on Hash,
   def convert(values)
     [:dict, values.map { |k, v| [convert(k), convert(v)] }]
   end
-  
+
   on /reserved_/,
   def convert(value)
     [:reserved_symbol, value]
   end
-  
+
   on String,
   def convert(value)
     [:string, value]
   end
-  
+
   on ['deleted', [Integer, Any]],
   def convert(value)
     ['deleted', value[1]]
   end
-  
-  on :not_implemented?,
+
+  on :starts_with_cat?,
   def convert(value)
     [:fail, value]
   end
-  
+
   on free: Integer, method:
   def convert(free:)
     [:rofl, free]
   end
 
+  on either('#count', Array),
+  def convert(value)
+    value.count
+  end
+
+  on full_match('#count', '#lala'),
+  def convert(value)
+    value.count + value.lala
+  end
+
   default def convert(value)
     [:z, value]
   end
-  
-  def not_implemented?(value)
-    value.is_a? Symbol
+
+  def starts_with_cat?(value)
+    value.to_s.start_with?('cat')
+  end
+end
+
+class Z
+  def special_convert
+    [:special_convert, nil]
   end
 end
 
 converter = Converter.new
+p Converter.instance_methods
 p converter.convert(2) #[:integer, 2]
+p converter.convert(Z.new) #[:special_convert, nil]
+p converter.convert([4, 4]) # 2
 p converter.convert({2 => 4}) #[:dict, [[[:integer, 2], [:integer, 4]]]
-p converter.convert('reserved_l') #[;reserved_symbol, 'l']
+p converter.convert('reserved_l') #[:reserved_symbol, 'reserved_l']
 p converter.convert('zaza') #[:string, 'zaza']
 p converter.convert(['deleted', [2, Array]]) #['deleted', [2, Array]]
-p converter.convert(:f) #[:fail, :f]
+p converter.convert(:cat_hehe) #[:fail, :cat_hehe]
 p converter.convert(free: 2) #[:rofl, 2]
 p converter.convert(2.2) #[:z, 2.2]
+
 ```
 cbb
 -----
@@ -109,4 +145,4 @@ Todo
 Copyright
 -----
 
-Copyright (c) 2014 Alexander Ivanov. See LICENSE for further details.
+Copyright (c) 2015 Alexander Ivanov. See LICENSE for further details.
