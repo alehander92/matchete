@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'matchete'
-  s.version     = '0.0.1'
+  s.version     = '0.2.0'
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Alexander Ivanov"]
   s.email       = ["alehander42@gmail.com"]
@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.description = %q{A DSL for method overloading for Ruby based on pattern matching}
 
   s.add_development_dependency 'rspec', '~> 0'
-  
+
   s.license       = 'MIT'
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
