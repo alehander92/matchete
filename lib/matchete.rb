@@ -32,10 +32,23 @@ module Matchete
       convert_to_matcher method_name
     end
 
+    # Matches something like sum types:
+    # either(Integer, Array) 
+    # matches both [2] and 2
     def either(*guards)
       -> arg { guards.any? { |g| match_guard(g, arg) } }
     end
 
+    # Matches an exact value
+    # useful if you want to match a string starting with '#' or the value of a class
+    # exact(Integer) matches Integer, not 2
+    def exact(value)
+      -> arg { arg == value }
+    end
+
+    # Matches each guard
+    # full_match(Integer, '#value')
+    # matches only instances of Integer which respond to '#value'
     def full_match(*guards)
       -> arg { guards.all? { |g| match_guard(g, arg) } }
     end
@@ -105,7 +118,11 @@ module Matchete
       when Module
         arg.is_a? guard
       when Symbol
-        send guard, arg
+        if guard.to_s[-1] == '?'
+          send guard, arg
+        else
+          guard == arg
+        end
       when Proc
         instance_exec arg, &guard
       when Regexp
