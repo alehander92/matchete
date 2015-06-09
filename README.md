@@ -170,7 +170,7 @@ p converter.convert(2.2) #[:z, 2.2]
 
 version
 -------
-0.5.0
+0.5.1
 
 
 cbb
