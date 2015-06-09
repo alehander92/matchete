@@ -4,7 +4,6 @@ Matchete
 Matchete provides a DSL for method overloading based on pattern matching for Ruby.
 
 [![Build Status](https://travis-ci.org/alehander42/matchete.svg)](https://travis-ci.org/alehander42/matchete)
-[![Code Climate](https://codeclimate.com/github/alehander42/matchete.png)](https://codeclimate.com/github/alehander42/matchete)
 
 It's just a quick hack inspired by weissbier and the use-return-values-of-method-definitions DSL technique used in [harmonic](https://github.com/s2gatev/harmonic)
 
@@ -20,6 +19,9 @@ Features
 * `on :test?` matches with user-defined predicate methods
 * `on either('#count', Array)` matches if any of the tests returns true for an arg
 * `on full_match('#count', '#combine')` matches if all of the tests return true for an arg
+* `on exact(Integer)` matches special values, used as shortcuts in other cases:
+classes, strings starting with '#', etc
+# `default` matches when no match has been found in `on` branches
 
 
 
@@ -30,6 +32,35 @@ Install
 
 Usage
 -----
+
+```ruby
+class Translator
+  include Matchete
+
+  on Any, :string,
+  def translate(value, to)
+    value.to_s
+  end
+
+  on '#-@', :negative,
+  def translate(value, to)
+    - value
+  end
+
+  on String, :integer,
+  def translate(value, to)
+    value.to_i
+  end
+
+  default def translate(value, to)
+    0
+  end
+end
+
+t = Translator.new
+p t.translate 72, :negative # -72
+p t.translate nil, :integer # 0
+```
 
 ```ruby
 require 'matchete'

@@ -4,6 +4,25 @@ require 'rspec'
 require 'matchete'
 
 describe Matchete do
+  it 'can use a pattern based on `either` helpers' do
+    class A
+      include Matchete
+
+      on either(FalseClass, Proc), FalseClass,
+      def work(g, h)
+        g
+      end
+
+      on FalseClass, NilClass,
+      def work(g, h)
+        :love
+      end
+    end
+
+    expect(A.new.work(false, false)).to eq false
+    expect(A.new.work(false, nil)).to eq :love
+  end
+
   it 'can be used to overload a method in a class' do
     class A
       include Matchete
@@ -130,6 +149,25 @@ describe Matchete do
     end
 
     expect(A.new.play(2.2)).to eq :else
+  end
+
+  it 'can use a pattern based on `exact` helpers' do
+    class A
+      include Matchete
+
+      on Integer,
+      def lala(a)
+        a - 2
+      end
+
+      on exact(Integer),
+      def lala(a)
+        a
+      end
+    end
+
+    expect(A.new.lala(4)).to eq 2
+    expect(A.new.lala(Integer)).to eq Integer
   end
 
   it 'can use a pattern based on existing predicate methods given as symbols' do
