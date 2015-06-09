@@ -33,7 +33,7 @@ module Matchete
     end
 
     # Matches something like sum types:
-    # either(Integer, Array) 
+    # either(Integer, Array)
     # matches both [2] and 2
     def either(*guards)
       -> arg { guards.any? { |g| match_guard(g, arg) } }
@@ -44,6 +44,14 @@ module Matchete
     # exact(Integer) matches Integer, not 2
     def exact(value)
       -> arg { arg == value }
+    end
+
+    # Matches property results
+    # e.g. having('#to_s': '[]') will match []
+    def having(**properties)
+      -> arg do
+        properties.all? { |prop, result| arg.respond_to?(prop[1..-1]) && arg.send(prop[1..-1]) == result }
+      end
     end
 
     # Matches each guard

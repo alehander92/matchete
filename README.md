@@ -21,7 +21,8 @@ Features
 * `on full_match('#count', '#combine')` matches if all of the tests return true for an arg
 * `on exact(Integer)` matches special values, used as shortcuts in other cases:
 classes, strings starting with '#', etc
-# `default` matches when no match has been found in `on` branches
+* `on having('#count' => 2)` matches objects with properties with certain values
+* `default` matches when no match has been found in `on` branches
 
 
 
@@ -169,7 +170,7 @@ p converter.convert(2.2) #[:z, 2.2]
 
 version
 -------
-0.4.0
+0.5.0
 
 
 cbb
