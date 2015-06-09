@@ -135,6 +135,12 @@ p converter.convert(free: 2) #[:rofl, 2]
 p converter.convert(2.2) #[:z, 2.2]
 
 ```
+
+version
+-------
+0.4.0
+
+
 cbb
 -----
 ![](https://global3.memecdn.com/kawaii-danny-trejo_o_2031011.jpg)
